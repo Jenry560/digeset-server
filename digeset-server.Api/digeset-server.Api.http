@@ -1,0 +1,6 @@
+@digeset_server.Api_HostAddress = http://localhost:5188
+
+GET {{digeset_server.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
