@@ -15,6 +15,8 @@ public partial class Multa
 
     public int ConceptoId { get; set; }
 
+    public int AgenteId { get; set; }
+
     public string Descripcion { get; set; }
 
     public decimal Latitud { get; set; }
@@ -26,6 +28,8 @@ public partial class Multa
     public DateTime? FechaCreacion { get; set; }
 
     public int EstadoId { get; set; }
+
+    public virtual Agente Agente { get; set; }
 
     public virtual Concepto Concepto { get; set; }
 }

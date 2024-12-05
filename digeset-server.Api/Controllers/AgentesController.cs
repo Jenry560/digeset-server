@@ -9,6 +9,7 @@ using digeset_server.Core.entities;
 using digeset_server.Infrastructure.Context;
 using AutoMapper;
 using digeset_server.Core.dtos;
+using Solurecwebapi.Reponse;
 
 namespace digeset_server.Api.Controllers
 {
@@ -29,21 +30,35 @@ namespace digeset_server.Api.Controllers
 
         // GET: api/Agentes
         [HttpGet("usuarioId")]
-        public async Task<ActionResult<AgenteDto>> GetAgentes(int usuarioId)
+        public async Task<ActionResult<DataResponse<List<AgenteDto>>>> GetAgentes(int usuarioId)
         {
-            var agentes = await _context.Agentes.Where(x => x.UsuarioId == usuarioId).ToListAsync();
-            return _mapper.Map<AgenteDto>(agentes);
+            try
+            {
+                var agentes = await _context.Agentes.Where(x => x.UsuarioId == usuarioId).ToListAsync();
+                var agentesDto = _mapper.Map<List<AgenteDto>>(agentes);
+
+                if (!agentesDto.Any())
+                {
+                    return NotFound(new DataResponse<List<AgenteDto>>(false, "No se encontraron agentes para el usuario especificado"));
+                }
+
+                return Ok(new DataResponse<List<AgenteDto>>(true, "Datos obtenidos exitosamente", agentesDto));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new DataResponse<List<AgenteDto>>(false, $"Error interno del servidor: {ex.Message}"));
+            }
         }
 
 
-        // PUT: api/Agentes/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutAgente(int id, Agente agente)
+        public async Task<ActionResult<DataResponse<string>>> PutAgente(int id, [FromBody] Agente agente)
         {
             if (id != agente.AgenteId)
             {
-                return BadRequest();
+                return BadRequest(new DataResponse<string>(false, "El ID proporcionado no coincide con el agente"));
             }
 
             _context.Entry(agente).State = EntityState.Modified;
@@ -51,69 +66,94 @@ namespace digeset_server.Api.Controllers
             try
             {
                 await _context.SaveChangesAsync();
+                return Ok(new DataResponse<string>(true, "Agente actualizado exitosamente"));
             }
             catch (DbUpdateConcurrencyException)
             {
                 if (!AgenteExists(id))
                 {
-                    return NotFound();
+                    return NotFound(new DataResponse<string>(false, "El agente no existe"));
                 }
                 else
                 {
-                    throw;
+                    return StatusCode(StatusCodes.Status500InternalServerError,
+                        new DataResponse<string>(false, "Error de concurrencia al actualizar el agente"));
                 }
             }
-
-            return NoContent();
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new DataResponse<string>(false, $"Error interno del servidor: {ex.Message}"));
+            }
         }
 
 
-
-        // PUT: api/Agentes/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("Estado/{id}/{estado}")]
-        public async Task<IActionResult> EstadoAgente(int id, bool estado)
+        public async Task<ActionResult<DataResponse<string>>> EstadoAgente(int id, bool estado)
         {
-           
-
-            var agente = await _context.Agentes.FindAsync(id);
-            if (agente == null)
-            {
-                return BadRequest();
-            }
-
-            agente.Estado = estado;
-            _context.Agentes.Update(agente);
             try
             {
+                var agente = await _context.Agentes.FindAsync(id);
+                if (agente == null)
+                {
+                    return NotFound(new DataResponse<string>(false, "El agente no existe"));
+                }
+
+                agente.Estado = estado;
+                _context.Entry(agente).State = EntityState.Modified;
+
                 await _context.SaveChangesAsync();
+
+                return Ok(new DataResponse<string>(true, "Estado del agente actualizado exitosamente"));
             }
             catch (DbUpdateConcurrencyException)
             {
                 if (!AgenteExists(id))
                 {
-                    return NotFound();
+                    return NotFound(new DataResponse<string>(false, "El agente no existe"));
                 }
                 else
                 {
-                    throw;
+                    return StatusCode(StatusCodes.Status500InternalServerError,
+                        new DataResponse<string>(false, "Error de concurrencia al actualizar el estado del agente"));
                 }
             }
-
-            return NoContent();
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new DataResponse<string>(false, $"Error interno del servidor: {ex.Message}"));
+            }
         }
+
 
         // POST: api/Agentes
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Agente>> PostAgente(AgenteDto agente)
+        public async Task<ActionResult<DataResponse<AgenteDto>>> PostAgente([FromBody] AgenteDto agenteDto)
         {
-            _context.Agentes.Add(_mapper.Map<Agente>(agente));
-            await _context.SaveChangesAsync();
+            try
+            {
+                var agente = _mapper.Map<Agente>(agenteDto);
 
-            return CreatedAtAction("GetAgente", new { id = agente.AgenteId }, agente);
+                // Agregar lógica adicional si es necesario (ej. validaciones específicas)
+                _context.Agentes.Add(agente);
+                await _context.SaveChangesAsync();
+
+                var createdAgenteDto = _mapper.Map<AgenteDto>(agente);
+
+                return CreatedAtAction(
+                    nameof(GetAgentes),
+                    new { id = createdAgenteDto.AgenteId },
+                    new DataResponse<AgenteDto>(true, "Agente creado exitosamente", createdAgenteDto)
+                );
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new DataResponse<AgenteDto>(false, $"Error interno del servidor: {ex.Message}"));
+            }
         }
-       
+
+
         private bool AgenteExists(int id)
         {
             return _context.Agentes.Any(e => e.AgenteId == id);

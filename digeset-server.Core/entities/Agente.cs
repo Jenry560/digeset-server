@@ -18,4 +18,6 @@ public partial class Agente
     public bool Estado { get; set; }
 
     public int UsuarioId { get; set; }
+
+    public virtual ICollection<Multa> Multa { get; set; } = new List<Multa>();
 }

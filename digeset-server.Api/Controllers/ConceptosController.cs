@@ -5,6 +5,7 @@ using digeset_server.Core.entities;
 using digeset_server.Infrastructure.Context;
 using AutoMapper;
 using digeset_server.Core.dtos;
+using Solurecwebapi.Reponse;
 
 namespace digeset_server.Api.Controllers
 {
@@ -24,64 +25,97 @@ namespace digeset_server.Api.Controllers
 
         // GET: api/Conceptos
         [HttpGet]
-        public async Task<ActionResult<ConceptoDto>> GetConceptos()
+        public async Task<ActionResult<DataResponse<List<ConceptoDto>>>> GetConceptos()
         {
-            List<Concepto> conceptos = await _context.Conceptos.ToListAsync();
-            var conceptoDtos = _mapper.Map<ConceptoDto>(conceptos);
-            return Ok(conceptoDtos);
-        }
-
-  
-        [HttpPut]
-        public async Task<IActionResult> PutConcepto(ConceptoDto concepto)
-        {
-         
-
-            _context.Entry(_mapper.Map<Concepto>(concepto)).State = EntityState.Modified;
             try
             {
+                List<Concepto> conceptos = await _context.Conceptos.ToListAsync();
+                var conceptoDtos = _mapper.Map<List<ConceptoDto>>(conceptos);
+                return Ok(new DataResponse<List<ConceptoDto>>(true, "Datos obtenidos exitosamente", conceptoDtos));
+            }
+            catch (Exception ex)
+            {
+                return new DataResponse<List<ConceptoDto>>(false, $"Error interno del servidor: {ex.Message}");
+            }
+        }
+
+
+        [HttpPut]
+        public async Task<ActionResult<DataResponse<ConceptoDto>>> PutConcepto(ConceptoDto concepto)
+        {
+            try
+            {
+                _context.Entry(_mapper.Map<Concepto>(concepto)).State = EntityState.Modified;
+
                 await _context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
                 if (!ConceptoExists(concepto.ConceptoId))
                 {
-                    return NotFound();
+
+                    return BadRequest(new DataResponse<ConceptoDto>(false, "Concepto no encontrado"));
                 }
                 else
                 {
+                    return BadRequest(new DataResponse<ConceptoDto>(false, "Error interno del servidor"));
                     throw;
                 }
             }
 
-            return NoContent();
+            return Ok(new DataResponse<ConceptoDto>(true, "Concepto actualizado exitosamente", concepto));
         }
 
         // POST: api/Conceptos
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Concepto>> PostConcepto(ConceptoDto concepto)
+        public async Task<ActionResult<DataResponse<ConceptoDto>>> PostConcepto([FromBody] ConceptoDto conceptoDto)
         {
-            _context.Conceptos.Add(_mapper.Map<Concepto>(concepto));
-            await _context.SaveChangesAsync();
+            try
+            {
+                if (conceptoDto == null)
+                {
+                    return BadRequest(new DataResponse<ConceptoDto>(false, "El objeto ConceptoDto no puede ser nulo"));
+                }
 
-            return CreatedAtAction("GetConcepto", new { id = concepto.ConceptoId }, concepto);
+                var concepto = _mapper.Map<Concepto>(conceptoDto);
+                _context.Conceptos.Add(concepto);
+                await _context.SaveChangesAsync();
+
+                var createdDto = _mapper.Map<ConceptoDto>(concepto);
+
+                return CreatedAtAction(nameof(GetConceptos), new { id = concepto.ConceptoId },
+                    new DataResponse<ConceptoDto>(true, "Concepto creado exitosamente", createdDto));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new DataResponse<ConceptoDto>(false, $"Error interno del servidor: {ex.Message}"));
+            }
         }
+
 
         // DELETE: api/Conceptos/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteConcepto(int id)
+        public async Task<ActionResult<DataResponse<string>>> DeleteConcepto(int id)
         {
-            var concepto = await _context.Conceptos.FindAsync(id);
-            if (concepto == null)
+            try
             {
-                return NotFound();
+                var concepto = await _context.Conceptos.FindAsync(id);
+                if (concepto == null)
+                {
+                    return NotFound(new DataResponse<string>(false, "El concepto con el ID especificado no existe"));
+                }
+
+                _context.Conceptos.Remove(concepto);
+                await _context.SaveChangesAsync();
+
+                return Ok(new DataResponse<string>(true, "Concepto eliminado exitosamente"));
             }
-
-            _context.Conceptos.Remove(concepto);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new DataResponse<string>(false, $"Error interno del servidor: {ex.Message}"));
+            }
         }
 
         private bool ConceptoExists(int id)

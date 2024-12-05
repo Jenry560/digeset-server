@@ -1,14 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
+﻿
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using digeset_server.Core.entities;
 using digeset_server.Infrastructure.Context;
 using AutoMapper;
 using digeset_server.Core.dtos;
+using Solurecwebapi.Reponse;
 
 namespace digeset_server.Api.Controllers
 {
@@ -28,22 +25,32 @@ namespace digeset_server.Api.Controllers
 
         // GET: api/Usuarios
         [HttpGet]
-        public async Task<ActionResult<UsuarioDto>> GetUsuarios()
+        public async Task<ActionResult<DataResponse<List<UsuarioDto>>>> GetUsuarios()
         {
-            var usuarios = await _context.Usuarios.ToListAsync();
 
-            return Ok(_mapper.Map<UsuarioDto>(usuarios));
+            try
+            {
+                var usuarios = await _context.Usuarios.ToListAsync();
+
+                return Ok(new DataResponse<List<UsuarioDto>>(true, "Datos obtenidos exitosamente", _mapper.Map<List<UsuarioDto>>(usuarios)));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new DataResponse<List<UsuarioDto>>(false, $"Error interno del servidor: {ex.Message}"));
+            }
+
         }
 
 
-        // PUT: api/Usuarios/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutUsuario(int id, UsuarioDto usuario)
+        public async Task<ActionResult<DataResponse<UsuarioDto>>> PutUsuario(int id, UsuarioDto usuario)
         {
+
+            DataResponse<UsuarioDto> response = new DataResponse<UsuarioDto>();
             if (id != usuario.UsuarioId)
             {
-                return BadRequest();
+                response.Message = "Id de usuario incorrecto";
+                return BadRequest(response);
             }
 
             _context.Entry(_mapper.Map<Usuario>(usuario)).State = EntityState.Modified;
@@ -56,42 +63,70 @@ namespace digeset_server.Api.Controllers
             {
                 if (!UsuarioExists(id))
                 {
-                    return NotFound();
+                    response.Message = "Usuario no encontrado";
+                    return NotFound(response);
                 }
                 else
                 {
-                    throw;
+
+                    return StatusCode(500, new DataResponse<UsuarioDto>(false, "Error interno del servidor"));
                 }
             }
 
-            return NoContent();
+            response.IsSuccess = true;
+            response.Message = "Usuario actualizado exitosamente";
+            response.Result = usuario;
+
+            return Ok(response);
         }
 
         // POST: api/Usuarios
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Usuario>> PostUsuario(UsuarioDto usuario)
+        public async Task<ActionResult<DataResponse<UsuarioDto>>> PostUsuario(UsuarioDto usuario)
         {
-            _context.Usuarios.Add(_mapper.Map<Usuario>(usuario));
-            await _context.SaveChangesAsync();
+            try
+            {
+                _context.Usuarios.Add(_mapper.Map<Usuario>(usuario));
+                await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetUsuario", new { id = usuario.UsuarioId }, usuario);
+                return CreatedAtAction("GetUsuario", new { id = usuario.UsuarioId }, new DataResponse<UsuarioDto>(true, "Usuario creado exitosamente", _mapper.Map<UsuarioDto>(usuario)));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new DataResponse<UsuarioDto>(false, $"Error interno del servidor: {ex.Message}"));
+            }
         }
 
         // DELETE: api/Usuarios/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteUsuario(int id)
+        public async Task<ActionResult<DataResponse<UsuarioDto>>> DeleteUsuario(int id)
         {
-            var usuario = await _context.Usuarios.FindAsync(id);
-            if (usuario == null)
+            try
             {
-                return NotFound();
+                var response = new DataResponse<UsuarioDto>();
+
+                var usuario = await _context.Usuarios.FindAsync(id);
+                if (usuario == null)
+                {
+                    response.Message = "Usuario no encontrado";
+
+                    return NotFound(response);
+                }
+
+                _context.Usuarios.Remove(usuario);
+                await _context.SaveChangesAsync();
+
+                response.IsSuccess = true;
+                response.Message = "Usuario eliminado exitosamente";
+
+                return Ok(response);
+
+
             }
-
-            _context.Usuarios.Remove(usuario);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            catch (Exception ex)
+            {
+                return StatusCode(500, new DataResponse<UsuarioDto>(false, $"Error interno del servidor: {ex.Message}"));
+            }
         }
 
         private bool UsuarioExists(int id)

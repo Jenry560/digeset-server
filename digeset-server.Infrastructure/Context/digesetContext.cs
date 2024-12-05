@@ -55,7 +55,7 @@ public partial class digesetContext : DbContext
 
         modelBuilder.Entity<Multa>(entity =>
         {
-            entity.HasKey(e => e.MultaId).HasName("PK__Multa__DA090DE0576D3B61");
+            entity.HasKey(e => e.MultaId).HasName("PK__Multa__DA090DE0F9E588A4");
 
             entity.Property(e => e.Cedula)
                 .IsRequired()
@@ -70,10 +70,15 @@ public partial class digesetContext : DbContext
                 .IsRequired()
                 .HasMaxLength(100);
 
+            entity.HasOne(d => d.Agente).WithMany(p => p.Multa)
+                .HasForeignKey(d => d.AgenteId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__Multa__AgenteId__44FF419A");
+
             entity.HasOne(d => d.Concepto).WithMany(p => p.Multa)
                 .HasForeignKey(d => d.ConceptoId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Multa__ConceptoI__3D5E1FD2");
+                .HasConstraintName("FK__Multa__ConceptoI__4316F928");
         });
 
         modelBuilder.Entity<Usuario>(entity =>

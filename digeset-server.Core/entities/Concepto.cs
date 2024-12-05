@@ -11,7 +11,7 @@ public partial class Concepto
 
     public string Descripcion { get; set; }
 
-    public decimal Monto { get; set; }
+    public double Monto { get; set; }
 
     public virtual ICollection<Multa> Multa { get; set; } = new List<Multa>();
 }
