@@ -86,10 +86,11 @@ namespace digeset_server.Api.Controllers
         {
             try
             {
-                _context.Usuarios.Add(_mapper.Map<Usuario>(usuario));
+                var UsuarioData = _mapper.Map<Usuario>(usuario);
+                _context.Usuarios.Add(UsuarioData);
                 await _context.SaveChangesAsync();
 
-                return CreatedAtAction("GetUsuario", new { id = usuario.UsuarioId }, new DataResponse<UsuarioDto>(true, "Usuario creado exitosamente", _mapper.Map<UsuarioDto>(usuario)));
+                return CreatedAtAction("GetUsuarios", new { id = UsuarioData.UsuarioId }, new DataResponse<UsuarioDto>(true, "Cliente creado exitosamente", _mapper.Map<UsuarioDto>(UsuarioData)));
             }
             catch (Exception ex)
             {

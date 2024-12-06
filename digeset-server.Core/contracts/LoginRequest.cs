@@ -8,8 +8,8 @@ namespace digeset_server.Core.contracts
 {
     public class LoginRequest
     {
-        public string cedula { get; set; }
+        public string Cedula { get; set; }
 
-        public string clave {  get; set; }
+        public string Clave {  get; set; }
     }
 }

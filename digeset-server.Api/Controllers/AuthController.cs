@@ -10,6 +10,8 @@ using Solurecwebapi.Reponse;
 
 namespace digeset_server.Api.Controllers
 {
+    [Route("[controller]")]
+    [ApiController]
     public class AuthController : Controller
     {
         private readonly digesetContext _context;
@@ -20,12 +22,12 @@ namespace digeset_server.Api.Controllers
             _context = context;
             _mapper = mapper;
         }
-        [HttpPut("Login/{tipo}")]
+        [HttpPost("Login/{tipo}")]
         public async Task<ActionResult<DataResponse<object>>> LoginAgente(string tipo, [FromBody] LoginRequest req)
         {
             try
             {
-                if (req == null || string.IsNullOrWhiteSpace(req.cedula) || string.IsNullOrWhiteSpace(req.clave))
+                if (req == null || string.IsNullOrWhiteSpace(req.Cedula) || string.IsNullOrWhiteSpace(req.Clave))
                 {
                     return BadRequest(new DataResponse<object>(false, "La cédula y la clave son obligatorias"));
                 }
@@ -35,12 +37,12 @@ namespace digeset_server.Api.Controllers
                 if (tipo == "Agente")
                 {
                     encontrado = await _context.Agentes
-                        .FirstOrDefaultAsync(a => a.Cedula == req.cedula && a.Clave == req.clave);
+                        .FirstOrDefaultAsync(a => a.Cedula == req.Cedula && a.Clave == req.Clave);
                 }
                 else
                 {
                     encontrado = await _context.Usuarios
-                        .FirstOrDefaultAsync(u => u.Cedula == req.cedula && u.Clave == req.clave);
+                        .FirstOrDefaultAsync(u => u.Cedula == req.Cedula && u.Clave == req.Clave);
                 }
 
                 if (encontrado == null)
