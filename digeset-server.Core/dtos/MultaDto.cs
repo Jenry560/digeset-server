@@ -15,6 +15,8 @@ public partial class MultaDto
 
     public int ConceptoId { get; set; }
 
+    public int AgenteId { get; set; }
+
     public string Descripcion { get; set; }
 
     public decimal Latitud { get; set; }
@@ -26,5 +28,6 @@ public partial class MultaDto
     public DateTime? FechaCreacion { get; set; }
 
     public int EstadoId { get; set; }
+
 
 }

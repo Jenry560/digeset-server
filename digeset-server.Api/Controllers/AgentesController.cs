@@ -29,7 +29,7 @@ namespace digeset_server.Api.Controllers
 
 
         // GET: api/Agentes
-        [HttpGet("usuarioId")]
+        [HttpGet("{usuarioId}")]
         public async Task<ActionResult<DataResponse<List<AgenteDto>>>> GetAgentes(int usuarioId)
         {
             try
@@ -132,24 +132,23 @@ namespace digeset_server.Api.Controllers
         {
             try
             {
-                var agente = _mapper.Map<Agente>(agenteDto);
+                try
+                {
+                    var agenteData = _mapper.Map<Agente>(agenteDto);
+                    _context.Agentes.Add(agenteData);
+                    await _context.SaveChangesAsync();
 
-                // Agregar lógica adicional si es necesario (ej. validaciones específicas)
-                _context.Agentes.Add(agente);
-                await _context.SaveChangesAsync();
-
-                var createdAgenteDto = _mapper.Map<AgenteDto>(agente);
-
-                return CreatedAtAction(
-                    nameof(GetAgentes),
-                    new { id = createdAgenteDto.AgenteId },
-                    new DataResponse<AgenteDto>(true, "Agente creado exitosamente", createdAgenteDto)
-                );
+                    return Ok(new DataResponse<AgenteDto>(true, "Agente creado exitosamente", _mapper.Map<AgenteDto>(agenteData)));
+                }
+                catch (Exception ex)
+                {
+                    return StatusCode(500, new DataResponse<UsuarioDto>(false, $"Error interno del servidor: {ex.Message}"));
+                }
             }
             catch (Exception ex)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError,
-                    new DataResponse<AgenteDto>(false, $"Error interno del servidor: {ex.Message}"));
+                    new DataResponse<ConceptoDto>(false, $"Error interno del servidor: {ex.Message}"));
             }
         }
 

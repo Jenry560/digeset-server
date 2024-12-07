@@ -117,9 +117,7 @@ namespace digeset_server.Api.Controllers
 
                 var createdMultaDto = _mapper.Map<MultaDto>(multa);
 
-                return CreatedAtAction(
-                    nameof(GetMultaUsuarioId), // Cambiar si usas otro método para obtener multas individuales
-                    new { id = createdMultaDto.MultaId },
+                return Ok(
                     new DataResponse<MultaDto>(true, "Multa creada exitosamente", createdMultaDto)
                 );
             }
