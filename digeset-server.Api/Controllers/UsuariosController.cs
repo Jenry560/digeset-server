@@ -30,7 +30,7 @@ namespace digeset_server.Api.Controllers
 
             try
             {
-                var usuarios = await _context.Usuarios.ToListAsync();
+                var usuarios = await _context.Usuarios.Where((x)=>x.UsuarioId != 1).ToListAsync();
 
                 return Ok(new DataResponse<List<UsuarioDto>>(true, "Datos obtenidos exitosamente", _mapper.Map<List<UsuarioDto>>(usuarios)));
             }
@@ -90,7 +90,7 @@ namespace digeset_server.Api.Controllers
                 _context.Usuarios.Add(UsuarioData);
                 await _context.SaveChangesAsync();
 
-                return CreatedAtAction("GetUsuarios", new { id = UsuarioData.UsuarioId }, new DataResponse<UsuarioDto>(true, "Cliente creado exitosamente", _mapper.Map<UsuarioDto>(UsuarioData)));
+                return CreatedAtAction("GetUsuarios", new { id = UsuarioData.UsuarioId }, new DataResponse<UsuarioDto>(true, "Usuario creado exitosamente", _mapper.Map<UsuarioDto>(UsuarioData)));
             }
             catch (Exception ex)
             {

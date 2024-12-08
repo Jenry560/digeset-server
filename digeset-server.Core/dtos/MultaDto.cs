@@ -25,7 +25,7 @@ public partial class MultaDto
 
     public byte[] Foto { get; set; }
 
-    public DateTime? FechaCreacion { get; set; }
+    public DateTime? FechaCreacion { get; set; } = DateTime.Now;
 
     public int EstadoId { get; set; }
 

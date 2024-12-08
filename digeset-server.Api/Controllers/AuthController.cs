@@ -38,11 +38,22 @@ namespace digeset_server.Api.Controllers
                 {
                     encontrado = await _context.Agentes
                         .FirstOrDefaultAsync(a => a.Cedula == req.Cedula && a.Clave == req.Clave);
+                   if(encontrado != null)
+                   {
+                        Agente agente = (Agente)encontrado;
+                        if (!agente.Estado)
+                        {
+                            return BadRequest(new DataResponse<object>(false, "El Agente esta desactivado"));
+                        }
+                   }
                 }
                 else
                 {
                     encontrado = await _context.Usuarios
                         .FirstOrDefaultAsync(u => u.Cedula == req.Cedula && u.Clave == req.Clave);
+
+
+                
                 }
 
                 if (encontrado == null)

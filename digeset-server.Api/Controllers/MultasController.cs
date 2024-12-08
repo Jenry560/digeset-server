@@ -29,7 +29,7 @@ namespace digeset_server.Api.Controllers
             try
             {
                 var multas = await _context.Multa
-                    .Where(x => x.Agente.UsuarioId == usuarioId)
+                    .Where(x => usuarioId == 1 || x.Agente.UsuarioId == usuarioId)
                     .ToListAsync();
 
                 if (!multas.Any())
@@ -72,30 +72,56 @@ namespace digeset_server.Api.Controllers
                     new DataResponse<List<MultaDto>>(false, $"Error interno del servidor: {ex.Message}"));
             }
         }
-
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutMulta(int id, [FromBody] MultaDto multaDto)
+        public async Task<IActionResult> PutMulta(int id, [FromForm] MultaDto multaDto, IFormFile foto)
         {
-            if (id != multaDto.MultaId)
-            {
-                return BadRequest(new DataResponse<bool>(false, "El ID de la multa no coincide con el ID proporcionado", false));
-            }
-
-            var multa = _mapper.Map<Multa>(multaDto);
-            _context.Entry(multa).State = EntityState.Modified;
-
             try
             {
-                await _context.SaveChangesAsync();
-                return Ok(new DataResponse<bool>(true, "Multa actualizada exitosamente", true));
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!MultaExists(id))
+                if (id != multaDto.MultaId)
+                {
+                    return BadRequest(new DataResponse<bool>(false, "El ID de la multa no coincide con el ID proporcionado", false));
+                }
+
+                if (multaDto == null)
+                {
+                    return BadRequest(new DataResponse<bool>(false, "Los datos del formulario son requeridos", false));
+                }
+
+                // Buscar la multa existente
+                var existingMulta = await _context.Multa.FindAsync(id);
+                if (existingMulta == null)
                 {
                     return NotFound(new DataResponse<bool>(false, "La multa especificada no existe", false));
                 }
-                throw;
+
+                // Actualizar los datos de la multa existente
+                _mapper.Map(multaDto, existingMulta);
+
+                // Si se proporciona una nueva foto, reemplazarla
+                if (foto != null)
+                {
+                    using (var memoryStream = new MemoryStream())
+                    {
+                        await foto.CopyToAsync(memoryStream);
+                        existingMulta.Foto = memoryStream.ToArray();
+                    }
+                }
+
+                _context.Entry(existingMulta).State = EntityState.Modified;
+
+                try
+                {
+                    await _context.SaveChangesAsync();
+                    return Ok(new DataResponse<bool>(true, "Multa actualizada exitosamente", true));
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!MultaExists(id))
+                    {
+                        return NotFound(new DataResponse<bool>(false, "La multa especificada no existe", false));
+                    }
+                    throw;
+                }
             }
             catch (Exception ex)
             {
@@ -105,11 +131,33 @@ namespace digeset_server.Api.Controllers
         }
 
 
+
         [HttpPost]
-        public async Task<ActionResult<DataResponse<MultaDto>>> PostMulta([FromBody] MultaDto multaDto)
+        public async Task<ActionResult<DataResponse<MultaDto>>> PostMulta([FromForm] MultaDto multaDto, IFormFile foto)
         {
             try
             {
+                if (foto == null)
+                {
+                    return BadRequest(
+                        new DataResponse<MultaDto>(false, "La imagen es requerida.")
+                    );
+                }
+
+                if (multaDto == null)
+                {
+                    return BadRequest(
+                        new DataResponse<MultaDto>(false, "Los datos del formulario son requeridos.")
+                    );
+                }
+
+
+                using (var memoryStream = new MemoryStream())
+                {
+                    await foto.CopyToAsync(memoryStream);
+                    multaDto.Foto = memoryStream.ToArray();
+                }
+
                 var multa = _mapper.Map<Multa>(multaDto);
 
                 _context.Multa.Add(multa);
@@ -117,16 +165,17 @@ namespace digeset_server.Api.Controllers
 
                 var createdMultaDto = _mapper.Map<MultaDto>(multa);
 
-                return Ok(
-                    new DataResponse<MultaDto>(true, "Multa creada exitosamente", createdMultaDto)
-                );
+                return Ok(new DataResponse<MultaDto>(true, "Multa creada exitosamente", createdMultaDto));
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Error: {ex.Message}");
                 return StatusCode(StatusCodes.Status500InternalServerError,
                     new DataResponse<MultaDto>(false, $"Error interno del servidor: {ex.Message}"));
             }
         }
+
+
 
 
         [HttpPut("Estado/{multaId}/{estadoId}")]
@@ -207,12 +256,15 @@ namespace digeset_server.Api.Controllers
 
                 var totalComision = await _context.Multa
                     .Where(x => x.AgenteId == agenteId &&
+                                x.EstadoId == 1 &&
                                 x.FechaCreacion.HasValue &&
                                 x.FechaCreacion.Value.Month == mesInt)
                     .SumAsync(r => r.Concepto.Monto) * 0.10;
 
                 var ultimasMultas = await _context.Multa
-                    .Where(x => x.AgenteId == agenteId)
+                    .Where(x => x.AgenteId == agenteId && 
+                                x.FechaCreacion.HasValue &&
+                                x.FechaCreacion.Value.Month == mesInt)
                     .OrderByDescending(m => m.FechaCreacion)
                     .Take(5)
                     .ToListAsync();

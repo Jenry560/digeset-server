@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using digeset_server.Core.entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace digeset_server.Infrastructure.Context;
 
@@ -14,6 +15,11 @@ public partial class digesetContext : DbContext
     {
     }
 
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        optionsBuilder.UseSqlite("Data Source=digeset.db");
+    }
+
     public virtual DbSet<Agente> Agentes { get; set; }
 
     public virtual DbSet<Concepto> Conceptos { get; set; }
@@ -21,6 +27,8 @@ public partial class digesetContext : DbContext
     public virtual DbSet<Multa> Multa { get; set; }
 
     public virtual DbSet<Usuario> Usuarios { get; set; }
+
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
