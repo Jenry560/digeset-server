@@ -17,7 +17,7 @@ public partial class digesetContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        optionsBuilder.UseSqlite("Data Source=digeset.db");
+        optionsBuilder.UseNpgsql("");
     }
 
     public virtual DbSet<Agente> Agentes { get; set; }

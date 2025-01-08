@@ -7,7 +7,7 @@ public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<digesetCon
     public digesetContext CreateDbContext(string[] args)
     {
         var optionsBuilder = new DbContextOptionsBuilder<digesetContext>();
-        optionsBuilder.UseSqlite("Data Source=digeset.db"); // Cadena de conexión a SQLite
+        optionsBuilder.UseNpgsql("");
 
         return new digesetContext(optionsBuilder.Options);
     }
