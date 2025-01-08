@@ -23,8 +23,10 @@ builder.Services.AddCors(options =>
                .AllowAnyHeader();
     });
 });
+builder.Configuration.AddEnvironmentVariables();
 builder.Services.AddAutoMapper(typeof(MappingProfile));
-builder.Services.AddDbContext<digesetContext>();
+builder.Services.AddDbContext<digesetContext>(
+   options => options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 
 var app = builder.Build();

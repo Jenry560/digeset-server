@@ -15,10 +15,6 @@ public partial class digesetContext : DbContext
     {
     }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        optionsBuilder.UseNpgsql("");
-    }
 
     public virtual DbSet<Agente> Agentes { get; set; }
 
@@ -70,8 +66,8 @@ public partial class digesetContext : DbContext
                 .HasMaxLength(20);
             entity.Property(e => e.Descripcion).HasMaxLength(200);
             entity.Property(e => e.FechaCreacion)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp");
             entity.Property(e => e.Latitud).HasColumnType("decimal(9, 6)");
             entity.Property(e => e.Longitud).HasColumnType("decimal(9, 6)");
             entity.Property(e => e.Nombre)
