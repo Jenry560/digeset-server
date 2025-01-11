@@ -1,11 +1,23 @@
 using digeset_server.Application.Mapping;
 using digeset_server.Infrastructure.Context;
 using Microsoft.EntityFrameworkCore;
+using DotNetEnv;
+
+// Cargar variables de entorno desde el archivo .env
+Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Reemplazar las variables en la cadena de conexión
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+connectionString = connectionString!
+    .Replace("${DB_HOST}", Environment.GetEnvironmentVariable("DB_HOST"))
+    .Replace("${DB_PORT}", Environment.GetEnvironmentVariable("DB_PORT"))
+    .Replace("${DB_NAME}", Environment.GetEnvironmentVariable("DB_NAME"))
+    .Replace("${DB_USERNAME}", Environment.GetEnvironmentVariable("DB_USERNAME"))
+    .Replace("${DB_PASSWORD}", Environment.GetEnvironmentVariable("DB_PASSWORD"));
 
+// Add services to the container.
 
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
@@ -23,11 +35,9 @@ builder.Services.AddCors(options =>
                .AllowAnyHeader();
     });
 });
-builder.Configuration.AddEnvironmentVariables();
 builder.Services.AddAutoMapper(typeof(MappingProfile));
-builder.Services.AddDbContext<digesetContext>(
-   options => options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
-
+builder.Services.AddDbContext<digesetContext>(options =>
+    options.UseNpgsql(connectionString));
 
 var app = builder.Build();
 
