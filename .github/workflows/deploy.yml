@@ -1,0 +1,27 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check SSH key length (debug)
+        run: |
+          echo "${{ secrets.VPS_SSH_KEY }}" | wc -c > length.txt
+          cat length.txt
+      - name: Conectar por SSH y desplegar
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd /home/digeset-server
+            git pull origin master
+            docker compose down
+            docker compose up -d --build

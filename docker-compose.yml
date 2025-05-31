@@ -1,0 +1,12 @@
+# docker-compose.yml
+version: "3.8"
+
+services:
+  api:
+    build: .
+    container_name: digesetapi
+    restart: always
+    ports:
+      - "3002:8080"
+    env_file:
+      - ./digeset-server.Api/.env
